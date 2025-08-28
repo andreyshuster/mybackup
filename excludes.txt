@@ -17,6 +17,7 @@ __pycache__/
 .venv/
 venv/
 env/
+.cargo/
 
 # Build Output and Compiled Files
 dist/
