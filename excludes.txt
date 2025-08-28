@@ -1,0 +1,86 @@
+# Version Control
+.git/
+.svn/
+.hg/
+.bzr/
+CVS/
+
+# Dependencies and Package Managers
+node_modules/
+vendor/
+.npm/
+.yarn/
+bower_components/
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Build Output and Compiled Files
+dist/
+build/
+target/
+out/
+bin/
+obj/
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+*.class
+*.jar
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Temporary and Cache Files
+tmp/
+temp/
+cache/
+.cache/
+*.tmp
+*.temp
+*.log
+*.pid
+*.lock
+
+# System Files
+*.bak
+*.backup
+*.old
+core
+.Trash*/
+.recycle/
+
+# Media and Large Files
+*.iso
+*.dmg
+*.img
+*.avi
+*.mov
+*.mp4
+*.mkv
+*.flv
+*.wmv
+
+# Database Files
+*.db
+*.sqlite
+*.mdb
+
+# Archives (already compressed)
+*.zip
+*.rar
+*.7z
+*.tar.gz
+*.tar.bz2
+*.tar.xz
