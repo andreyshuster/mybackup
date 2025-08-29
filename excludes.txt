@@ -61,6 +61,8 @@ cache/
 core
 .Trash*/
 .recycle/
+.config/
+.local/
 
 # Media and Large Files
 *.iso
