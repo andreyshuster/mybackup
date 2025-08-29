@@ -19,6 +19,19 @@ cleanup() {
         rm -f "$CURRENT_DIR"
     fi
     
+    # Write failure status to destination root folder if DEST is set
+    if [ -n "$DEST" ] && [ -d "$DEST" ]; then
+        STATUS_FILE="$DEST/last_backup_status.txt"
+        {
+            echo "BACKUP STATUS: FAILED"
+            echo "DATETIME: $(date '+%Y-%m-%d %H:%M:%S')"
+            echo "SOURCE: ${SOURCE:-Unknown}"
+            echo "DESTINATION: $DEST"
+            echo "ERROR: Backup was interrupted or failed"
+        } > "$STATUS_FILE"
+        echo "Failure status written to: $STATUS_FILE"
+    fi
+    
     echo "Cleanup completed. Backup was not finished."
     exit 1
 }
@@ -148,3 +161,20 @@ echo "Backup completed successfully!"
 echo "Backup size: $BACKUP_SIZE"
 echo "Daily backup location: $DAILY_BACKUP"
 echo "Current backup symlink: $CURRENT_DIR"
+
+# Write status to destination root folder
+STATUS_FILE="$DEST/last_backup_status.txt"
+{
+    echo "BACKUP STATUS: SUCCESS"
+    echo "DATETIME: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "SOURCE: $SOURCE"
+    echo "DESTINATION: $DEST"
+    echo "BACKUP_SIZE: $BACKUP_SIZE"
+    echo "DAILY_BACKUP: $DAILY_BACKUP"
+    if [ -n "$ENCRYPTION_KEY" ]; then
+        echo "ENCRYPTION: Enabled ($ENCRYPTION_KEY)"
+    else
+        echo "ENCRYPTION: Disabled"
+    fi
+} > "$STATUS_FILE"
+echo "Status written to: $STATUS_FILE"
