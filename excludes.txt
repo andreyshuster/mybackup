@@ -9,6 +9,7 @@ CVS/
 node_modules/
 vendor/
 .npm/
+.nvm/
 .yarn/
 bower_components/
 __pycache__/
@@ -37,6 +38,9 @@ obj/
 # IDE and Editor Files
 .vscode/
 .idea/
+.mozilla/
+.firefox/
+.m2/
 *.swp
 *.swo
 *~

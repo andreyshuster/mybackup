@@ -6,19 +6,14 @@ set -e
 cleanup() {
     echo ""
     echo "Backup interrupted by user. Cleaning up..."
-    
+
     # Remove incomplete daily backup if it exists
     if [ -n "$DAILY_BACKUP" ] && [ -d "$DAILY_BACKUP" ]; then
         echo "Removing incomplete backup: $DAILY_BACKUP"
         rm -rf "$DAILY_BACKUP"
     fi
-    
-    # Remove broken symlink if it exists
-    if [ -n "$CURRENT_DIR" ] && [ -L "$CURRENT_DIR" ] && [ ! -e "$CURRENT_DIR" ]; then
-        echo "Removing broken symlink: $CURRENT_DIR"
-        rm -f "$CURRENT_DIR"
-    fi
-    
+
+
     # Write failure status to destination root folder if DEST is set
     if [ -n "$DEST" ] && [ -d "$DEST" ]; then
         STATUS_FILE="$DEST/last_backup_status.txt"
@@ -31,7 +26,7 @@ cleanup() {
         } > "$STATUS_FILE"
         echo "Failure status written to: $STATUS_FILE"
     fi
-    
+
     echo "Cleanup completed. Backup was not finished."
     exit 1
 }
@@ -105,35 +100,32 @@ mkdir -p "$DAILY_DIR" "$WEEKLY_DIR"
 echo "Starting incremental backup of '$SOURCE' to '$DEST'"
 
 if [ -d "$CURRENT_DIR" ]; then
-    echo "Using existing backup as base for incremental sync..."
-    LINK_DEST="--link-dest=$CURRENT_DIR"
+    echo "Previous backup found - creating full backup..."
 else
     echo "No previous backup found - creating full backup..."
-    LINK_DEST=""
 fi
 
 DAILY_BACKUP="$DAILY_DIR/backup_$DATE"
 mkdir -p "$DAILY_BACKUP"
 
 echo "Syncing files with rsync..."
-rsync -rvL --times --delete $EXCLUDE_OPTS $LINK_DEST "$SOURCE/" "$DAILY_BACKUP/"
+rsync -rvL --times --delete $EXCLUDE_OPTS "$SOURCE/" "$DAILY_BACKUP/"
 
 if [ -d "$CURRENT_DIR" ]; then
     rm -rf "$CURRENT_DIR"
 fi
-ln -s "$DAILY_BACKUP" "$CURRENT_DIR"
 
 echo "Daily backup created: $DAILY_BACKUP"
 
 if [ $(date +%u) -eq 7 ]; then
     echo "Sunday detected - creating weekly backup"
     WEEKLY_BACKUP="$WEEKLY_DIR/weekly_$WEEK"
-    cp -al "$DAILY_BACKUP" "$WEEKLY_BACKUP"
-    
+    cp -r "$DAILY_BACKUP" "$WEEKLY_BACKUP"
+
     echo "Compressing weekly backup..."
     tar -czf "$WEEKLY_BACKUP.tar.gz" -C "$WEEKLY_DIR" "$(basename "$WEEKLY_BACKUP")"
     rm -rf "$WEEKLY_BACKUP"
-    
+
     if [ -n "$ENCRYPTION_KEY" ]; then
         echo "Encrypting weekly backup..."
         gpg --trust-model always --encrypt --recipient "$ENCRYPTION_KEY" --output "$WEEKLY_BACKUP.tar.gz.gpg" "$WEEKLY_BACKUP.tar.gz"
@@ -160,7 +152,6 @@ BACKUP_SIZE=$(du -sh "$DAILY_BACKUP" | cut -f1)
 echo "Backup completed successfully!"
 echo "Backup size: $BACKUP_SIZE"
 echo "Daily backup location: $DAILY_BACKUP"
-echo "Current backup symlink: $CURRENT_DIR"
 
 # Write status to destination root folder
 STATUS_FILE="$DEST/last_backup_status.txt"
