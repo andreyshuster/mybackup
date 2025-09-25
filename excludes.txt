@@ -6,6 +6,7 @@
 CVS/
 
 # Dependencies and Package Managers
+go/
 node_modules/
 vendor/
 .npm/
