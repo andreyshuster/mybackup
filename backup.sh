@@ -31,8 +31,35 @@ cleanup() {
     exit 1
 }
 
-# Set up signal handlers
+# Error handler function
+error_handler() {
+    local exit_code=$?
+    local line_number=$1
+
+    echo ""
+    echo "Error: Backup failed at line $line_number with exit code $exit_code"
+
+    # Write failure status to destination root folder if DEST is set
+    if [ -n "$DEST" ] && [ -d "$DEST" ]; then
+        STATUS_FILE="$DEST/last_backup_status.txt"
+        {
+            echo "BACKUP STATUS: FAILED"
+            echo "DATETIME: $(date '+%Y-%m-%d %H:%M:%S')"
+            echo "SOURCE: ${SOURCE:-Unknown}"
+            echo "DESTINATION: $DEST"
+            echo "ERROR: Backup failed at line $line_number with exit code $exit_code"
+            echo "ERROR_LINE: $line_number"
+            echo "EXIT_CODE: $exit_code"
+        } > "$STATUS_FILE"
+        echo "Error status written to: $STATUS_FILE"
+    fi
+
+    exit $exit_code
+}
+
+# Set up signal and error handlers
 trap cleanup SIGINT SIGTERM
+trap 'error_handler $LINENO' ERR
 
 usage() {
     echo "Usage: $0 <source_directory> <destination_directory> [encryption_key] [exclude_file]"
