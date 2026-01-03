@@ -50,6 +50,9 @@ error_handler() {
             echo "ERROR: Backup failed at line $line_number with exit code $exit_code"
             echo "ERROR_LINE: $line_number"
             echo "EXIT_CODE: $exit_code"
+            if [ -n "$LOG_FILE" ] && [ -f "$LOG_FILE" ]; then
+                echo "LOG_FILE: $LOG_FILE"
+            fi
         } > "$STATUS_FILE"
         echo "Error status written to: $STATUS_FILE"
     fi
@@ -136,7 +139,39 @@ DAILY_BACKUP="$DAILY_DIR/backup_$DATE"
 mkdir -p "$DAILY_BACKUP"
 
 echo "Syncing files with rsync..."
-rsync -rvL --times --delete $EXCLUDE_OPTS "$SOURCE/" "$DAILY_BACKUP/"
+
+# Create log file for this backup
+LOG_FILE="$DEST/rsync_log_$DATE.txt"
+echo "Rsync output will be logged to: $LOG_FILE"
+
+# Run rsync and capture output
+rsync -rvL --times --delete --itemize-changes $EXCLUDE_OPTS "$SOURCE/" "$DAILY_BACKUP/" 2>&1 | tee "$LOG_FILE"
+
+# Capture rsync exit code
+RSYNC_EXIT_CODE=${PIPESTATUS[0]}
+
+# If rsync failed, show detailed error information
+if [ $RSYNC_EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "ERROR: rsync failed with exit code $RSYNC_EXIT_CODE"
+    echo ""
+    echo "Common rsync exit codes:"
+    echo "  23 = Partial transfer due to error (some files failed)"
+    echo "  24 = Partial transfer due to vanished source files"
+    echo ""
+    echo "Failed files/errors logged to: $LOG_FILE"
+    echo ""
+    echo "To see errors, run: grep -E 'rsync:|error|failed|Permission denied' $LOG_FILE"
+    echo ""
+
+    # Extract and show specific errors if any
+    if grep -qE 'rsync:|error|failed|Permission denied|cannot|denied' "$LOG_FILE"; then
+        echo "Detected errors in rsync output:"
+        grep -E 'rsync:|error|failed|Permission denied|cannot|denied' "$LOG_FILE" | head -20
+    fi
+
+    exit $RSYNC_EXIT_CODE
+fi
 
 if [ -d "$CURRENT_DIR" ]; then
     rm -rf "$CURRENT_DIR"
